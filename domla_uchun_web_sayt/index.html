@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Optoelektron o‘lchash, raqamli sinxronlash va infraqizil LED drayverining interaktiv, taxminiy laboratoriya simulyatsiyasi.">
+
+  <title>OptoLab — Optoelektron laboratoriya</title>
+
+  <link rel="stylesheet" href="script.css">
+  <script src="style.js" defer></script>
+
+  <!-- style.js yaratadigan o‘ng tomon inspektori uchun moslik uslublari.
+       Keyinchalik bu qoidalarni script.css ichiga ko‘chirish mumkin. -->
+  <style>
+    #elementDrawer {
+      position: fixed;
+      z-index: 10010;
+      top: 86px;
+      right: 12px;
+      bottom: 12px;
+      width: min(430px, calc(100vw - 24px));
+      overflow-y: auto;
+      color: #eaf6ff;
+      background: linear-gradient(155deg, #0d1d30, #06111f);
+      border: 1px solid #294966;
+      border-radius: 16px;
+      box-shadow: 0 24px 80px #0009;
+      transform: translateX(calc(100% + 24px));
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: transform .28s ease, opacity .22s ease, visibility .22s;
+      font: 13px/1.55 system-ui, sans-serif;
+      scrollbar-color: #35536f #071523;
+    }
+
+    #elementDrawer.open {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #elementDrawer .ed-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      background: #0b1a2b;
+      border-bottom: 1px solid #263e57;
+    }
+
+    #elementDrawer h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #elementDrawer .ed-sub {
+      margin-top: 4px;
+      color: #90a9c4;
+      font-size: 11px;
+    }
+
+    #elementDrawer .ed-body {
+      padding: 14px 16px 22px;
+    }
+
+    #elementDrawer .ed-card {
+      min-width: 0;
+      margin: 9px 0;
+      padding: 12px;
+      background: #0c2032;
+      border: 1px solid #243c54;
+      border-radius: 10px;
+    }
+
+    #elementDrawer .ed-card h4 {
+      margin: 0 0 8px;
+      color: #79e6f5;
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    #elementDrawer .ed-card p {
+      margin: 5px 0;
+      color: #c7d7e7;
+      font-size: 12px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    #elementDrawer .ed-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #elementDrawer .ed-metric {
+      min-width: 0;
+      padding: 11px;
+      background: #071625;
+      border: 1px solid #27415a;
+      border-radius: 9px;
+    }
+
+    #elementDrawer .ed-metric small,
+    #elementDrawer .ed-metric strong {
+      display: block;
+    }
+
+    #elementDrawer .ed-metric small {
+      color: #93abc3;
+      font-size: 10px;
+    }
+
+    #elementDrawer .ed-metric strong {
+      margin-top: 5px;
+      font: 700 13px ui-monospace, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    #elementDrawer .ed-field {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 125px;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    #elementDrawer .ed-field label {
+      color: #d7e6f5;
+      font-size: 11px;
+    }
+
+    #elementDrawer .ed-unit {
+      display: block;
+      color: #7894b0;
+      font-size: 10px;
+    }
+
+    #elementDrawer input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 9px;
+      color: #effaff;
+      background: #05111e;
+      border: 1px solid #31516f;
+      border-radius: 7px;
+    }
+
+    #elementDrawer button {
+      padding: 8px 11px;
+      color: #eaf6ff;
+      background: #102a40;
+      border: 1px solid #315978;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, box-shadow .18s;
+    }
+
+    #elementDrawer button:hover {
+      border-color: #50cfe8;
+      box-shadow: 0 0 16px #34d8f41a;
+    }
+
+    #elementDrawer .ed-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    #elementDrawer .ed-note {
+      margin-top: 13px;
+      padding: 10px 12px;
+      color: #f2dfbf;
+      background: #282215;
+      border-left: 3px solid #e0a252;
+      border-radius: 4px;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    #elementDrawer input[aria-invalid="true"] {
+      border-color: #ff657e;
+      box-shadow: 0 0 0 3px #ff657e20;
+    }
+
+    @media (max-width: 600px) {
+      #elementDrawer {
+        top: 72px;
+        right: 8px;
+        bottom: 8px;
+        width: calc(100vw - 16px);
+      }
+
+      #elementDrawer .ed-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      #elementDrawer .ed-field {
+        grid-template-columns: minmax(0, 1fr) 115px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #elementDrawer {
+        transition-duration: .01ms;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#main-content">Asosiy qismga o‘tish</a>
+
+  <!-- HEADER -->
+  <header class="app-header opto-motion-surface">
+    <div class="brand-block">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+
+      <div class="brand-copy">
+        <p class="eyebrow">UNIVERSITET LABORATORIYASI</p>
+        <h1>Opto<span>Lab</span></h1>
+      </div>
+
+      <span class="project-label">O‘quv simulyatsiyasi</span>
+    </div>
+
+    <nav class="main-nav" aria-label="Asosiy navigatsiya">
+      <a class="nav-link is-active" href="#sxema">Elektr sxema</a>
+      <a class="nav-link" href="#boshqaruv">Boshqaruv</a>
+      <a class="nav-link" href="#olchovlar">O‘lchovlar</a>
+      <a class="nav-link" href="#grafiklar">Grafiklar</a>
+      <a class="nav-link" href="#model-izohi">Model haqida</a>
+    </nav>
+
+    <div class="header-status" aria-live="polite">
+      <span class="status-led" id="appStatusLed"></span>
+      <span id="appStatusText">TAYYOR</span>
+    </div>
+  </header>
+
+  <main id="main-content" class="app-main">
+
+    <!-- KIRISH -->
+    <section class="intro-row" aria-labelledby="page-title">
+      <div>
+        <p class="section-kicker">
+          <span class="kicker-dot"></span>
+          INTERAKTIV MUHANDISLIK MUHITI
+        </p>
+
+        <h2 id="page-title">Optoelektron o‘lchash laboratoriyasi</h2>
+
+        <p class="intro-text">
+          Raqamli boshqaruv, infraqizil yorug‘lik manbalari, FD fotodetektori
+          va analog kuchaytirish bosqichlarini yagona taxminiy modelda kuzating.
+        </p>
+      </div>
+
+      <div class="model-badge">
+        <span class="badge-icon" aria-hidden="true">≈</span>
+        <span>
+          <strong>Taxminiy model</strong>
+          <small>Haqiqiy laboratoriya o‘lchovi emas</small>
+        </span>
+      </div>
+    </section>
+
+    <!-- SIMULYATSIYA TUGMALARI -->
+    <section class="toolbar panel opto-motion-surface" aria-label="Simulyatsiya boshqaruvi">
+      <div class="toolbar-state">
+        <span class="live-indicator" id="runIndicator"></span>
+        <div>
+          <strong id="simulationState">READY / TAYYOR</strong>
+          <small id="simulationTime">t = 0.00 s</small>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <button class="button button-primary" type="button" id="runButton">
+          <span aria-hidden="true">▶</span> RUN
+        </button>
+
+        <button class="button button-secondary" type="button" id="pauseButton">
+          <span aria-hidden="true">Ⅱ</span> PAUSE / NATIJA
+        </button>
+
+        <button class="button button-secondary" type="button" id="restartButton">
+          <span aria-hidden="true">↻</span> QAYTA BOSHLASH
+        </button>
+      </div>
+
+      <div class="toolbar-tools">
+        <button class="icon-button" type="button" id="zoomOutButton"
+                aria-label="Sxemani kichraytirish" title="Kichraytirish">−</button>
+
+        <button class="icon-button" type="button" id="zoomInButton"
+                aria-label="Sxemani kattalashtirish" title="Kattalashtirish">+</button>
+
+        <button class="button button-tertiary" type="button" id="fitButton">
+          MOSLASH
+        </button>
+
+        <button class="icon-button" type="button" id="themeButton"
+                aria-label="Rang mavzusini almashtirish"
+                title="Yorug‘/qorong‘i mavzu">◐</button>
+      </div>
+    </section>
+
+    <!-- BOSH QARUVLAR -->
+    <section id="boshqaruv" class="control-grid" aria-label="Manba va potensiometr boshqaruvi">
+
+      <article class="panel control-card opto-motion-surface">
+        <div class="card-heading">
+          <div class="card-icon source-icon" aria-hidden="true">⏚</div>
+
+          <div>
+            <h3>Sozlanadigan quvvat manbai</h3>
+            <p>Manba sozlamalari — taxminiy</p>
+          </div>
+
+          <label class="switch-label" for="sourceEnabled">Yoqilgan</label>
+          <input class="switch-input" type="checkbox" id="sourceEnabled" checked>
+        </div>
+
+        <div class="control-fields two-fields">
+          <label class="field-label" for="supplyVoltage">
+            Manba kuchlanishi <span>V</span>
+            <input id="supplyVoltage" name="supplyVoltage"
+                   type="number" min="0" max="24" step="0.1" value="12">
+          </label>
+
+          <label class="field-label" for="currentLimit">
+            Tok cheklovi <span>mA</span>
+            <input id="currentLimit" name="currentLimit"
+                   type="number" min="1" max="1000" step="1" value="100">
+          </label>
+        </div>
+
+        <div class="range-row">
+          <label for="supplyVoltageRange">Kuchlanishni tez sozlash</label>
+          <input id="supplyVoltageRange" type="range"
+                 min="0" max="24" step="0.1" value="12">
+          <output for="supplyVoltageRange" id="supplyVoltageOutput">12.0 V</output>
+        </div>
+
+        <div class="mini-stats">
+          <div>
+            <small>Sozlangan kuchlanish</small>
+            <strong id="sourceVoltageReadout">12.00 V</strong>
+          </div>
+          <div>
+            <small>Hisoblangan yuk toki</small>
+            <strong id="sourceCurrentReadout">— mA</strong>
+          </div>
+          <div>
+            <small>Tok cheklovi holati</small>
+            <strong id="currentLimitStatus">Faol emas</strong>
+          </div>
+        </div>
+
+        <p class="micro-note">
+          Tok cheklovi — eng yuqori ruxsat etilgan tok. Bu manba aynan
+          shuncha tok beryapti degani emas.
+        </p>
+      </article>
+
+      <article class="panel control-card pot-control-card opto-motion-surface">
+        <div class="card-heading">
+          <div class="card-icon pot-icon" aria-hidden="true">↗</div>
+
+          <div>
+            <h3>Uch oyoqli potensiometr</h3>
+            <p>A — W (surilgich) — B</p>
+          </div>
+
+          <span class="value-chip" id="potResistanceChip">20.0 kΩ</span>
+        </div>
+
+        <div class="pot-value-row">
+          <label class="field-label" for="potResistance">
+            A–W qarshiligi <span>kΩ</span>
+            <input id="potResistance" name="potResistance"
+                   type="number" min="1" max="100" step="0.5" value="20">
+          </label>
+
+          <div class="pot-voltage-readout">
+            <small>W nuqtasi boshqaruv kuchlanishi</small>
+            <strong id="potVoltageReadout">— V</strong>
+          </div>
+        </div>
+
+        <div class="range-row">
+          <label for="potResistanceRange">Qarshilikni o‘zgartiring</label>
+
+          <input id="potResistanceRange" type="range"
+                 min="1" max="100" step="0.5" value="20">
+
+          <div class="range-endpoints">
+            <span>1 kΩ</span>
+            <output id="potRangeOutput">20 kΩ</output>
+            <span>100 kΩ</span>
+          </div>
+        </div>
+
+        <div class="cause-effect">
+          <span class="cause-icon" aria-hidden="true">↔</span>
+          <p>
+            <strong>Kerakli natija:</strong>
+            qarshilik oshsa — LED yorqinligi pasayadi;
+            qarshilik kamayса — LED yorqinligi oshadi.
+          </p>
+        </div>
+      </article>
+
+      <article class="panel control-card led-control-card opto-motion-surface">
+        <div class="card-heading">
+          <div class="card-icon led-icon" aria-hidden="true">☼</div>
+          <div>
+            <h3>Infraqizil manbalar</h3>
+            <p>Ikki alohida chiqish kanali</p>
+          </div>
+        </div>
+
+        <div class="led-channel">
+          <div class="led-symbol led-symbol-one" aria-hidden="true">
+            <span></span><i></i><i></i>
+          </div>
+
+          <div class="led-channel-copy">
+            <strong>ИД1 / IR LED 1</strong>
+            <small id="led1Status">Boshlang‘ich holat</small>
+            <div class="brightness-track">
+              <span id="led1BrightnessBar"></span>
+            </div>
+          </div>
+
+          <label class="checkbox-control" for="led1Enabled">
+            <input type="checkbox" id="led1Enabled" checked>
+            <span>ON</span>
+          </label>
+        </div>
+
+        <div class="led-channel">
+          <div class="led-symbol led-symbol-two" aria-hidden="true">
+            <span></span><i></i><i></i>
+          </div>
+
+          <div class="led-channel-copy">
+            <strong>ИД2 / IR LED 2</strong>
+            <small id="led2Status">Boshlang‘ich holat</small>
+            <div class="brightness-track">
+              <span id="led2BrightnessBar"></span>
+            </div>
+          </div>
+
+          <label class="checkbox-control" for="led2Enabled">
+            <input type="checkbox" id="led2Enabled" checked>
+            <span>ON</span>
+          </label>
+        </div>
+
+        <p class="micro-note">
+          Infraqizil nurning o‘zi odatda ko‘zga ko‘rinmaydi.
+          Yorqinlik indikatorlari modeldagi nisbiy optik quvvatni ko‘rsatadi.
+        </p>
+      </article>
+    </section>
+
+    <!-- ELEKTR SXEMA -->
+    <section id="sxema" class="panel schematic-panel opto-motion-surface"
+             aria-labelledby="schematic-title">
+      <div class="panel-heading schematic-heading">
+        <div>
+          <p class="section-kicker">ASOSIY ISH MAYDONI</p>
+          <h3 id="schematic-title">Birlashtirilgan elektr sxemasi</h3>
+          <p>
+            Komponentni tanlang yoki sim ustiga olib boring — tafsilotlar
+            inspector panelida ko‘rsatiladi.
+          </p>
+        </div>
+
+        <div class="schematic-legend" aria-label="Sxema ranglari izohi">
+          <span><i class="legend-line legend-active"></i> Faol signal</span>
+          <span><i class="legend-line legend-inactive"></i> Faol bo‘lmagan</span>
+          <span><i class="legend-line legend-assumed"></i> Taxminiy ulanish</span>
+          <span><i class="legend-line legend-optical"></i> Optik yo‘l</span>
+        </div>
+      </div>
+
+      <div class="schematic-toolbar">
+        <div class="schematic-tool-group">
+          <button class="small-button is-selected" type="button"
+                  id="selectModeButton" aria-pressed="true">Tanlash</button>
+
+          <button class="small-button" type="button"
+                  id="connectionModeButton" aria-pressed="false">
+            Ulanishlarni tekshirish
+          </button>
+
+          <button class="small-button" type="button"
+                  id="showValuesButton" aria-pressed="true">
+            Qiymatlarni ko‘rsatish
+          </button>
+        </div>
+
+        <div class="schematic-meta">
+          <span id="componentCount">Komponentlar: —</span>
+          <span id="connectionCount">Ulanishlar: tekshirilmoqda</span>
+        </div>
+      </div>
+
+      <div class="svg-viewport" id="svgViewport" tabindex="0"
+           aria-label="Kattalashtiriladigan va suriladigan elektron sxema maydoni">
+
+        <svg id="circuitSvg" class="circuit-svg"
+             xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 2300 1450"
+             role="img"
+             aria-labelledby="circuitSvgTitle circuitSvgDesc">
+
+          <title id="circuitSvgTitle">
+            Optoelektron o‘lchash, raqamli boshqaruv va ikkita infraqizil LED drayverining sxemasi
+          </title>
+
+          <desc id="circuitSvgDesc">
+            FD fotodetektori, A1 va A2 analog kuchaytirgichlari, A3.1 va A3.2
+            moduli, DA mantiqiy bloklari, R va C komponentlari, T1–T4
+            tranzistorlari, VD1–VD2 diodlari, uch oyoqli potensiometr va
+            ikkita optik chiqish mavjud. Noaniq ulanishlar taxminiy.
+          </desc>
+
+          <defs>
+            <pattern id="schematicGrid" width="25" height="25"
+                     patternUnits="userSpaceOnUse">
+              <path d="M25 0 L0 0 0 25" fill="none"
+                    stroke="currentColor" stroke-opacity=".075" stroke-width="1"/>
+            </pattern>
+
+            <marker id="arrowElectrical" markerWidth="8" markerHeight="8"
+                    refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#3dd4e8"/>
+            </marker>
+
+            <marker id="arrowOptical" markerWidth="9" markerHeight="9"
+                    refX="7" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 Z" fill="#fbbf55"/>
+            </marker>
+
+            <filter id="opticalGlow" x="-40%" y="-40%"
+                    width="180%" height="180%">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <rect class="svg-canvas-bg" x="0" y="0"
+                width="2300" height="1450" rx="12"/>
+          <rect x="0" y="0" width="2300" height="1450"
+                fill="url(#schematicGrid)"/>
+
+          <!-- 01: Analog optical input. -->
+          <g class="zone-label" aria-hidden="true">
+            <text x="45" y="48">01 / OPTIK KIRISH VA ANALOG O‘LCHASH</text>
+            <path d="M45 62 H1450"/>
+          </g>
+
+          <g class="component-group detector-component"
+             data-component-id="ANALOG_FD" data-type="photodetector"
+             data-status="assumed" tabindex="0" role="button"
+             aria-label="FD fotodetektor">
+            <circle class="component-body detector-body" cx="145" cy="280" r="37"/>
+            <rect class="detector-core" x="132" y="258" width="26" height="44" rx="3"/>
+            <path class="optical-arrow" d="M80 245 L110 263 M88 228 L118 247"
+                  marker-end="url(#arrowOptical)"/>
+            <text class="component-label" x="145" y="335" text-anchor="middle">FD / ФД</text>
+            <text class="component-value" x="145" y="352" text-anchor="middle"
+                  data-value-for="ANALOG_FD">Iphoto: hisoblanadi</text>
+            <circle class="terminal" cx="108" cy="280" r="4"/>
+            <circle class="terminal" cx="182" cy="280" r="4"/>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C2"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C2">
+            <path class="wire" d="M108 280 H80 V180 H210"/>
+            <path class="wire" d="M226 166 V194 M238 166 V194"/>
+            <path class="wire" d="M210 180 H226 M238 180 H300"/>
+            <text class="component-label" x="232" y="151" text-anchor="middle">C2</text>
+            <text class="component-value" x="232" y="209" text-anchor="middle">qiymat faraz</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C3"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C3">
+            <path class="wire" d="M300 180 V218"/>
+            <path class="capacitor-plate" d="M281 220 H319 M281 232 H319"/>
+            <path class="wire" d="M300 232 V259"/>
+            <path class="ground-symbol"
+                  d="M284 259 H316 M289 266 H311 M295 273 H305"/>
+            <text class="component-label" x="326" y="229">C3</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R2"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R2">
+            <path class="wire" d="M300 180 H370"/>
+            <rect class="resistor-body" x="370" y="170" width="74" height="20" rx="2"/>
+            <path class="wire" d="M444 180 H478 V130"/>
+            <circle class="supply-terminal" cx="478" cy="130" r="6"/>
+            <text class="supply-label" x="493" y="135">+12 V</text>
+            <text class="component-label" x="407" y="158" text-anchor="middle">R2</text>
+            <text class="component-value" x="407" y="207" text-anchor="middle">qiymat faraz</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R1"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R1">
+            <path class="wire" d="M145 317 V382"/>
+            <rect class="resistor-body" x="135" y="382" width="20" height="55" rx="2"/>
+            <path class="wire" d="M145 437 V454"/>
+            <path class="ground-symbol"
+                  d="M128 454 H162 M134 462 H156 M140 470 H150"/>
+            <text class="component-label" x="165" y="414">R1</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C1"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C1">
+            <path class="wire" d="M182 280 H214 V315 H240"/>
+            <path class="capacitor-plate" d="M240 301 V329 M252 301 V329"/>
+            <path class="wire" d="M252 315 H322 V365 H385"/>
+            <text class="component-label" x="246" y="292" text-anchor="middle">C1</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_A1"
+             data-type="amplifier" data-status="assumed"
+             tabindex="0" role="button" aria-label="A1 analog kuchaytirgich">
+            <path class="amplifier-body" d="M385 328 L385 420 L465 374 Z"/>
+            <text class="component-label amplifier-label" x="411" y="380">A1</text>
+            <text class="pin-label" x="374" y="351">+</text>
+            <text class="pin-label" x="374" y="405">−</text>
+            <text class="pin-label" x="429" y="425">GND</text>
+            <path class="wire" d="M385 350 H365 M385 400 H365"/>
+            <path class="ground-symbol"
+                  d="M420 427 H442 M425 434 H437 M430 441 H432"/>
+            <text class="component-value" x="420" y="460" text-anchor="middle">gain: taxminiy</text>
+            <path class="wire" d="M465 374 H510"/>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C4"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C4">
+            <path class="wire" d="M510 374 H531"/>
+            <path class="capacitor-plate" d="M531 360 V388 M543 360 V388"/>
+            <path class="wire" d="M543 374 H574"/>
+            <text class="component-label" x="537" y="349" text-anchor="middle">C4</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R3"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R3">
+            <path class="wire" d="M574 374 H588"/>
+            <rect class="resistor-body" x="588" y="364" width="70" height="20" rx="2"/>
+            <path class="wire" d="M658 374 H705"/>
+            <text class="component-label" x="623" y="351" text-anchor="middle">R3</text>
+            <text class="component-value" x="623" y="403" text-anchor="middle">qiymat faraz</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_A2"
+             data-type="amplifier" data-status="assumed"
+             tabindex="0" role="button" aria-label="A2 analog kuchaytirgich">
+            <path class="amplifier-body" d="M705 330 L705 420 L790 375 Z"/>
+            <text class="component-label amplifier-label" x="733" y="382">A2</text>
+            <text class="pin-label" x="694" y="351">+</text>
+            <text class="pin-label" x="694" y="405">−</text>
+            <path class="wire" d="M705 351 H681 V310 H850 V375 H790"/>
+            <text class="component-label" x="765" y="299" text-anchor="middle">R4 / qayta aloqa</text>
+            <rect class="resistor-body" x="730" y="300" width="70" height="19" rx="2"/>
+            <path class="wire" d="M681 310 H650 V274"/>
+            <text class="component-value" x="747" y="444" text-anchor="middle">gain: taxminiy</text>
+            <path class="wire" d="M790 375 H845"/>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R4"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R4">
+            <rect class="hit-area" x="723" y="292" width="84" height="35"/>
+            <text class="small-note" x="765" y="291" text-anchor="middle">R4</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R5"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R5">
+            <path class="wire" d="M815 235 V278"/>
+            <circle class="supply-terminal" cx="815" cy="225" r="6"/>
+            <text class="supply-label" x="830" y="230">+12 V</text>
+            <rect class="resistor-body" x="805" y="278" width="20" height="54" rx="2"/>
+            <path class="wire" d="M815 332 V352 H850 V375"/>
+            <text class="component-label" x="831" y="306">R5</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_R6"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog rezistor R6">
+            <path class="wire" d="M815 375 V464"/>
+            <rect class="resistor-body" x="805" y="464" width="20" height="50" rx="2"/>
+            <path class="wire" d="M815 514 V535"/>
+            <circle class="supply-terminal" cx="815" cy="545" r="6"/>
+            <text class="supply-label" x="830" y="550">−12 V</text>
+            <text class="component-label" x="832" y="491">R6</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C5"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C5">
+            <path class="wire" d="M845 375 H870"/>
+            <path class="capacitor-plate" d="M870 361 V389 M882 361 V389"/>
+            <path class="wire" d="M882 375 H930"/>
+            <text class="component-label" x="876" y="350" text-anchor="middle">C5</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_C6"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Analog kondensator C6">
+            <path class="wire" d="M815 514 V570 H860"/>
+            <path class="capacitor-plate" d="M860 556 V584 M872 556 V584"/>
+            <path class="wire" d="M872 570 H930"/>
+            <text class="component-label" x="866" y="545" text-anchor="middle">C6</text>
+            <text class="small-note" x="930" y="589">pastki tarmoq</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP1" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP1 o‘lchov nuqtasi">
+            <circle cx="214" cy="315" r="7"/><text x="214" y="300">TP1</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP2" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP2 o‘lchov nuqtasi">
+            <circle cx="550" cy="374" r="7"/><text x="550" y="358">TP2</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP3" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP3 o‘lchov nuqtasi">
+            <circle cx="679" cy="374" r="7"/><text x="679" y="358">TP3</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP4" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP4 o‘lchov nuqtasi">
+            <circle cx="930" cy="375" r="7"/><text x="930" y="358">TP4</text>
+          </g>
+
+          <g class="component-group" data-component-id="ANALOG_A3_MODULE"
+             data-type="analog-module" data-status="assumed"
+             tabindex="0" role="button" aria-label="A3.1 va A3.2 analog moduli">
+            <path class="wire" d="M930 375 H1000 V340 H1034 M1000 375 V440 H1034"/>
+            <rect class="module-body" x="1034" y="294" width="160" height="196" rx="8"/>
+            <path class="module-divider" d="M1034 391 H1194"/>
+            <text class="component-label" x="1114" y="315" text-anchor="middle">A3.1</text>
+            <text class="component-label" x="1114" y="413" text-anchor="middle">A3.2</text>
+            <text class="pin-label" x="1045" y="347">1</text>
+            <text class="pin-label" x="1045" y="443">10</text>
+            <text class="pin-label" x="1178" y="347">16</text>
+            <text class="pin-label" x="1178" y="443">9</text>
+            <path class="wire" d="M1194 340 H1250 M1194 440 H1250"/>
+            <circle class="terminal" cx="1250" cy="340" r="4"/>
+            <circle class="terminal" cx="1250" cy="440" r="4"/>
+            <text class="port-label" x="1264" y="344">A / signal</text>
+            <text class="port-label" x="1264" y="444">B / signal</text>
+            <text class="small-note" x="1114" y="515" text-anchor="middle">Pin funksiyalari rasm bo‘yicha</text>
+            <text class="small-note" x="1114" y="532" text-anchor="middle">to‘liq aniqlanmagan</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP5" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP5 o‘lchov nuqtasi">
+            <circle cx="1220" cy="340" r="7"/><text x="1220" y="324">TP5</text>
+          </g>
+
+          <g class="test-point" data-component-id="TP6" data-type="test-point"
+             tabindex="0" role="button" aria-label="TP6 o‘lchov nuqtasi">
+            <circle cx="1220" cy="440" r="7"/><text x="1220" y="424">TP6</text>
+          </g>
+
+          <g class="port-labels">
+            <text x="1370" y="332">сиг / signal</text>
+            <text x="1370" y="363">опор / reference</text>
+            <text x="1370" y="394">измер / measure</text>
+            <text x="1370" y="425">обм / exchange*</text>
+            <text x="1370" y="456">A синх*</text>
+            <text x="1370" y="487">B синх*</text>
+            <text class="small-note" x="1370" y="510">*Rasmdagi yozuvlar, ma’nosi tekshiriladi</text>
+          </g>
+
+          <!-- OPTIK YO‘LLAR: LED va fotodetektor orasida, elektr simidan alohida. -->
+          <g class="optical-paths" aria-label="Infraqizil optik yo‘llar">
+            <path id="opticalPath1" class="optical-beam beam-one"
+                  data-optical-path="LED1_TO_FD"
+                  d="M1930 860 C1900 690 1770 140 700 115 S210 170 145 240"
+                  marker-end="url(#arrowOptical)"/>
+
+            <path id="opticalPath2" class="optical-beam beam-two"
+                  data-optical-path="LED2_TO_FD"
+                  d="M1930 1070 C1885 760 1750 165 720 145 S260 185 160 245"
+                  marker-end="url(#arrowOptical)"/>
+
+            <text class="optical-label" x="1470" y="118">
+              OPTIK NUR — elektr sim emas
+            </text>
+          </g>
+
+          <!-- 02: DIGITAL CONTROL -->
+          <g class="zone-label" aria-hidden="true">
+            <text x="45" y="640">02 / RAQAMLI SINXRONLASH VA BOSHQARUV</text>
+            <path d="M45 654 H2250"/>
+          </g>
+
+          <g class="power-rail">
+            <path class="wire power-wire" d="M70 710 H1380"/>
+            <circle class="supply-terminal" cx="70" cy="710" r="6"/>
+            <text class="supply-label" x="84" y="700">+5 V digital</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA1_1"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA1.1 mantiqiy element">
+            <path class="logic-body" d="M95 760 H143 Q170 760 170 790 Q170 820 143 820 H95 Z"/>
+            <text class="component-label" x="130" y="794" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="181" cy="790" r="5"/>
+            <path class="wire" d="M186 790 H205"/>
+            <text class="component-label" x="132" y="748" text-anchor="middle">DA1.1</text>
+            <text class="pin-label" x="86" y="779">1</text>
+            <text class="pin-label" x="86" y="810">2</text>
+            <text class="pin-label" x="155" y="844">3</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C1"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C1 kondensator">
+            <path class="wire" d="M75 790 H95 M75 790 V865 H125"/>
+            <path class="capacitor-plate" d="M125 851 V879 M137 851 V879"/>
+            <path class="wire" d="M137 865 H205 V790"/>
+            <text class="component-label" x="131" y="840" text-anchor="middle">C1</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA1_2"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA1.2 mantiqiy element">
+            <path class="wire" d="M205 790 H250"/>
+            <path class="logic-body" d="M250 760 H298 Q325 760 325 790 Q325 820 298 820 H250 Z"/>
+            <text class="component-label" x="285" y="794" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="336" cy="790" r="5"/>
+            <path class="wire" d="M341 790 H375"/>
+            <text class="component-label" x="286" y="748" text-anchor="middle">DA1.2</text>
+            <text class="pin-label" x="241" y="779">4</text>
+            <text class="pin-label" x="241" y="810">5</text>
+            <text class="pin-label" x="310" y="844">6</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C2"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C2 kondensator">
+            <path class="wire" d="M218 735 H245"/>
+            <path class="capacitor-plate" d="M245 721 V749 M257 721 V749"/>
+            <path class="wire" d="M257 735 H285 V760"/>
+            <text class="component-label" x="251" y="710" text-anchor="middle">C2</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA1_3"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA1.3 mantiqiy element">
+            <path class="wire" d="M375 790 H420"/>
+            <path class="logic-body" d="M420 760 H468 Q495 760 495 790 Q495 820 468 820 H420 Z"/>
+            <text class="component-label" x="455" y="794" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="506" cy="790" r="5"/>
+            <path class="wire" d="M511 790 H545"/>
+            <text class="component-label" x="455" y="748" text-anchor="middle">DA1.3</text>
+            <text class="pin-label" x="411" y="779">9</text>
+            <text class="pin-label" x="411" y="810">10</text>
+            <text class="pin-label" x="480" y="844">8</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C3"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C3 kondensator">
+            <path class="wire" d="M390 850 H420"/>
+            <path class="capacitor-plate" d="M420 836 V864 M432 836 V864"/>
+            <path class="wire" d="M432 850 H455 V820"/>
+            <text class="component-label" x="426" y="825" text-anchor="middle">C3</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA2"
+             data-type="flip-flop" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA2 trigger">
+            <rect class="logic-body flipflop-body" x="570" y="735" width="105" height="125" rx="5"/>
+            <text class="component-label" x="622" y="725" text-anchor="middle">DA2</text>
+            <text class="pin-label" x="580" y="760">S</text>
+            <text class="pin-label" x="580" y="785">C</text>
+            <text class="pin-label" x="580" y="810">R</text>
+            <text class="pin-label" x="580" y="835">T</text>
+            <text class="pin-label" x="655" y="760">Q</text>
+            <text class="pin-label" x="655" y="835">Q̅</text>
+            <path class="wire" d="M545 790 H570 M675 760 H720 M675 835 H720 V900 H820"/>
+            <text class="small-note" x="622" y="883" text-anchor="middle">trigger modeli taxminiy</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R1"
+             data-type="resistor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital R1 rezistor">
+            <path class="wire" d="M555 900 H590"/>
+            <rect class="resistor-body" x="590" y="890" width="52" height="20" rx="2"/>
+            <path class="wire" d="M642 900 H660 V860"/>
+            <text class="component-label" x="616" y="878" text-anchor="middle">R1</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA3_1"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA3.1 mantiqiy element">
+            <path class="wire" d="M720 760 H760"/>
+            <path class="logic-body" d="M760 735 H808 Q835 735 835 765 Q835 795 808 795 H760 Z"/>
+            <text class="component-label" x="795" y="769" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="846" cy="765" r="5"/>
+            <path class="wire" d="M851 765 H885"/>
+            <text class="component-label" x="796" y="723" text-anchor="middle">DA3.1</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA3_2"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA3.2 mantiqiy element">
+            <path class="wire" d="M720 835 H760"/>
+            <path class="logic-body" d="M760 810 H808 Q835 810 835 840 Q835 870 808 870 H760 Z"/>
+            <text class="component-label" x="795" y="844" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="846" cy="840" r="5"/>
+            <path class="wire" d="M851 840 H885"/>
+            <text class="component-label" x="796" y="798" text-anchor="middle">DA3.2</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA3_3"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA3.3 mantiqiy element">
+            <path class="wire" d="M885 765 H915 V945 H950"/>
+            <path class="logic-body" d="M950 920 H998 Q1025 920 1025 950 Q1025 980 998 980 H950 Z"/>
+            <text class="component-label" x="985" y="954" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="1036" cy="950" r="5"/>
+            <path class="wire" d="M1041 950 H1070"/>
+            <text class="component-label" x="985" y="908" text-anchor="middle">DA3.3</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_DA3_4"
+             data-type="logic-gate" data-status="assumed"
+             tabindex="0" role="button" aria-label="DA3.4 mantiqiy element">
+            <path class="wire" d="M885 840 H915 V1050 H950"/>
+            <path class="logic-body" d="M950 1025 H998 Q1025 1025 1025 1055 Q1025 1085 998 1085 H950 Z"/>
+            <text class="component-label" x="985" y="1059" text-anchor="middle">&amp;</text>
+            <circle class="logic-invert" cx="1036" cy="1055" r="5"/>
+            <path class="wire" d="M1041 1055 H1070"/>
+            <text class="component-label" x="985" y="1013" text-anchor="middle">DA3.4</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C4"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C4 kondensator">
+            <path class="wire" d="M530 700 H555"/>
+            <path class="capacitor-plate" d="M555 686 V714 M567 686 V714"/>
+            <path class="wire" d="M567 700 H600 V735"/>
+            <text class="component-label" x="561" y="675" text-anchor="middle">C4</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C5"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C5 kondensator">
+            <path class="wire" d="M1070 950 H1100"/>
+            <path class="capacitor-plate" d="M1100 936 V964 M1112 936 V964"/>
+            <path class="wire" d="M1112 950 H1142"/>
+            <text class="component-label" x="1106" y="925" text-anchor="middle">C5</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C6"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C6 kondensator">
+            <path class="wire" d="M1070 1055 H1100"/>
+            <path class="capacitor-plate" d="M1100 1041 V1069 M1112 1041 V1069"/>
+            <path class="wire" d="M1112 1055 H1142"/>
+            <text class="component-label" x="1106" y="1030" text-anchor="middle">C6</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C7"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C7 kondensator">
+            <path class="wire" d="M1190 950 V985"/>
+            <path class="capacitor-plate" d="M1176 985 H1204 M1176 997 H1204"/>
+            <path class="wire" d="M1190 997 V1020"/>
+            <path class="ground-symbol" d="M1175 1020 H1205 M1181 1027 H1199 M1187 1034 H1193"/>
+            <text class="component-label" x="1210" y="995">C7</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_C8"
+             data-type="capacitor" data-status="assumed"
+             tabindex="0" role="button" aria-label="Digital C8 kondensator">
+            <path class="wire" d="M1190 1055 V1090"/>
+            <path class="capacitor-plate" d="M1176 1090 H1204 M1176 1102 H1204"/>
+            <path class="wire" d="M1190 1102 V1125"/>
+            <path class="ground-symbol" d="M1175 1125 H1205 M1181 1132 H1199 M1187 1139 H1193"/>
+            <text class="component-label" x="1210" y="1100">C8</text>
+          </g>
+
+          <!-- DIGITAL RESISTORS -->
+          <g class="component-group" data-component-id="DIGITAL_R2"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R2">
+            <path class="wire" d="M350 900 V925"/>
+            <rect class="resistor-body" x="340" y="925" width="20" height="48" rx="2"/>
+            <path class="wire" d="M350 973 V1000"/>
+            <path class="ground-symbol" d="M335 1000 H365 M341 1007 H359 M347 1014 H353"/>
+            <text class="component-label" x="366" y="949">R2</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R3"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R3">
+            <path class="wire" d="M690 900 V925"/>
+            <rect class="resistor-body" x="680" y="925" width="20" height="48" rx="2"/>
+            <path class="wire" d="M690 973 V990"/>
+            <text class="component-label" x="706" y="949">R3</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R4"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R4">
+            <path class="wire" d="M900 700 H925"/>
+            <rect class="resistor-body" x="925" y="690" width="56" height="20" rx="2"/>
+            <path class="wire" d="M981 700 H1000 V735"/>
+            <text class="component-label" x="953" y="680" text-anchor="middle">R4</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R5"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R5">
+            <path class="wire" d="M1280 720 V750"/>
+            <rect class="resistor-body" x="1270" y="750" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1280 800 V825"/>
+            <text class="component-label" x="1300" y="777">R5</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R6"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R6">
+            <path class="wire" d="M1350 720 V750"/>
+            <rect class="resistor-body" x="1340" y="750" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1350 800 V825"/>
+            <text class="component-label" x="1370" y="777">R6</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R7"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R7">
+            <path class="wire" d="M1420 900 V930"/>
+            <rect class="resistor-body" x="1410" y="930" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1420 980 V1010"/>
+            <path class="ground-symbol" d="M1405 1010 H1435 M1411 1017 H1429 M1417 1024 H1423"/>
+            <text class="component-label" x="1440" y="956">R7</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R8"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R8">
+            <path class="wire" d="M1650 850 H1685"/>
+            <rect class="resistor-body" x="1685" y="840" width="60" height="20" rx="2"/>
+            <path class="wire" d="M1745 850 H1780"/>
+            <text class="component-label" x="1715" y="829" text-anchor="middle">R8</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R9"
+             data-type="potentiometer" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R9 o‘zgaruvchan rezistor">
+            <path class="wire" d="M1780 850 H1810 V900"/>
+            <rect class="resistor-body" x="1800" y="900" width="20" height="65" rx="2"/>
+            <path class="pot-wiper" d="M1845 920 L1818 930 L1830 922"/>
+            <path class="wire" d="M1810 965 V990"/>
+            <text class="component-label" x="1835" y="891">R9 ↗</text>
+            <text class="small-note" x="1837" y="981">o‘zgaruvchan</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R10"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R10">
+            <path class="wire" d="M1240 1150 V1172"/>
+            <rect class="resistor-body" x="1230" y="1172" width="20" height="48" rx="2"/>
+            <path class="wire" d="M1240 1220 V1240"/>
+            <path class="ground-symbol" d="M1225 1240 H1255 M1231 1247 H1249 M1237 1254 H1243"/>
+            <text class="component-label" x="1260" y="1197">R10</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R11"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R11">
+            <path class="wire" d="M1290 1150 H1320"/>
+            <rect class="resistor-body" x="1320" y="1140" width="58" height="20" rx="2"/>
+            <path class="wire" d="M1378 1150 H1410"/>
+            <text class="component-label" x="1349" y="1130" text-anchor="middle">R11</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R12"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R12">
+            <path class="wire" d="M1410 1150 V1180"/>
+            <rect class="resistor-body" x="1400" y="1180" width="20" height="45" rx="2"/>
+            <path class="wire" d="M1410 1225 V1240"/>
+            <path class="ground-symbol" d="M1395 1240 H1425 M1401 1247 H1419 M1407 1254 H1413"/>
+            <text class="component-label" x="1430" y="1207">R12</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R13"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R13">
+            <path class="wire" d="M1460 720 V750"/>
+            <rect class="resistor-body" x="1450" y="750" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1460 800 V825"/>
+            <text class="component-label" x="1480" y="777">R13</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R14"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R14">
+            <path class="wire" d="M1520 720 V750"/>
+            <rect class="resistor-body" x="1510" y="750" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1520 800 V825"/>
+            <text class="component-label" x="1540" y="777">R14</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R15"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R15">
+            <path class="wire" d="M1580 900 V930"/>
+            <rect class="resistor-body" x="1570" y="930" width="20" height="50" rx="2"/>
+            <path class="wire" d="M1580 980 V1010"/>
+            <path class="ground-symbol" d="M1565 1010 H1595 M1571 1017 H1589 M1577 1024 H1583"/>
+            <text class="component-label" x="1600" y="956">R15</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R16"
+             data-type="resistor" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R16">
+            <path class="wire" d="M1650 1060 H1685"/>
+            <rect class="resistor-body" x="1685" y="1050" width="60" height="20" rx="2"/>
+            <path class="wire" d="M1745 1060 H1780"/>
+            <text class="component-label" x="1715" y="1039" text-anchor="middle">R16</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_R17"
+             data-type="potentiometer" data-status="assumed" tabindex="0" role="button"
+             aria-label="Digital R17 o‘zgaruvchan rezistor">
+            <path class="wire" d="M1780 1060 H1810 V1100"/>
+            <rect class="resistor-body" x="1800" y="1100" width="20" height="65" rx="2"/>
+            <path class="pot-wiper" d="M1845 1120 L1818 1130 L1830 1122"/>
+            <path class="wire" d="M1810 1165 V1190"/>
+            <text class="component-label" x="1835" y="1091">R17 ↗</text>
+            <text class="small-note" x="1837" y="1181">o‘zgaruvchan</text>
+          </g>
+
+          <!-- TRANZISTORLAR -->
+          <g class="component-group" data-component-id="DIGITAL_T1"
+             data-type="transistor" data-status="assumed" tabindex="0"
+             role="button" aria-label="T1 tranzistor drayveri">
+            <path class="wire" d="M1142 950 H1180 V900 H1245"/>
+            <circle class="transistor-body" cx="1275" cy="900" r="27"/>
+            <path class="transistor-line" d="M1258 882 L1258 918 M1258 890 L1293 872 M1258 910 L1293 928"/>
+            <path class="wire" d="M1245 900 H1258 M1293 872 H1320 V825 M1293 928 H1320 V990"/>
+            <text class="component-label" x="1275" y="860" text-anchor="middle">T1</text>
+            <text class="small-note" x="1275" y="936" text-anchor="middle">drayver</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_T2"
+             data-type="transistor" data-status="assumed" tabindex="0"
+             role="button" aria-label="T2 tranzistor drayveri">
+            <path class="wire" d="M1320 825 H1390"/>
+            <circle class="transistor-body" cx="1420" cy="825" r="27"/>
+            <path class="transistor-line" d="M1403 807 L1403 843 M1403 815 L1438 797 M1403 835 L1438 853"/>
+            <path class="wire" d="M1390 825 H1403 M1438 797 H1460 V710 M1438 853 H1460 V900"/>
+            <text class="component-label" x="1420" y="785" text-anchor="middle">T2</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_T3"
+             data-type="transistor" data-status="assumed" tabindex="0"
+             role="button" aria-label="T3 tranzistor drayveri">
+            <path class="wire" d="M1142 1055 H1180 V1100 H1245"/>
+            <circle class="transistor-body" cx="1275" cy="1100" r="27"/>
+            <path class="transistor-line" d="M1258 1082 L1258 1118 M1258 1090 L1293 1072 M1258 1110 L1293 1128"/>
+            <path class="wire" d="M1245 1100 H1258 M1293 1072 H1320 V1020 M1293 1128 H1320 V1180"/>
+            <text class="component-label" x="1275" y="1060" text-anchor="middle">T3</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_T4"
+             data-type="transistor" data-status="assumed" tabindex="0"
+             role="button" aria-label="T4 tranzistor drayveri">
+            <path class="wire" d="M1320 1020 H1390"/>
+            <circle class="transistor-body" cx="1420" cy="1020" r="27"/>
+            <path class="transistor-line" d="M1403 1002 L1403 1038 M1403 1010 L1438 992 M1403 1030 L1438 1048"/>
+            <path class="wire" d="M1390 1020 H1403 M1438 992 H1460 V900 M1438 1048 H1460 V1100"/>
+            <text class="component-label" x="1420" y="980" text-anchor="middle">T4</text>
+          </g>
+
+          <!-- DIODLAR -->
+          <g class="component-group" data-component-id="DIGITAL_VD1"
+             data-type="diode" data-status="assumed" tabindex="0"
+             role="button" aria-label="VD1 diod">
+            <path class="wire" d="M1180 950 V1000"/>
+            <path class="diode-symbol" d="M1165 1000 L1195 1000 L1180 1024 Z"/>
+            <path class="diode-bar" d="M1164 1026 H1196"/>
+            <path class="wire" d="M1180 1026 V1040"/>
+            <path class="ground-symbol" d="M1165 1040 H1195 M1171 1047 H1189 M1177 1054 H1183"/>
+            <text class="component-label" x="1200" y="1018">VD1</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_VD2"
+             data-type="diode" data-status="assumed" tabindex="0"
+             role="button" aria-label="VD2 diod">
+            <path class="wire" d="M1180 1055 V1150"/>
+            <path class="diode-symbol" d="M1165 1150 L1195 1150 L1180 1174 Z"/>
+            <path class="diode-bar" d="M1164 1176 H1196"/>
+            <path class="wire" d="M1180 1176 V1190"/>
+            <path class="ground-symbol" d="M1165 1190 H1195 M1171 1197 H1189 M1177 1204 H1183"/>
+            <text class="component-label" x="1200" y="1168">VD2</text>
+          </g>
+
+          <!-- MASTER POTENTIOMETER -->
+          <g class="component-group master-pot"
+             data-component-id="POT_MASTER" data-type="potentiometer"
+             data-status="assumed" tabindex="0" role="button"
+             aria-label="Uch terminalli boshqaruv potensiometri">
+
+            <text class="component-label" x="1545" y="650" text-anchor="middle">
+              POT_MASTER / boshqaruv
+            </text>
+
+            <path class="wire" d="M1495 710 H1518 M1572 710 H1595"/>
+            <circle class="terminal" cx="1495" cy="710" r="5"/>
+            <circle class="terminal" cx="1595" cy="710" r="5"/>
+            <rect class="resistor-body" x="1518" y="700" width="54" height="20" rx="2"/>
+            <path class="pot-wiper" d="M1545 748 L1545 722 L1557 730"/>
+            <path class="wire" d="M1545 748 V775 H1630"/>
+            <circle class="terminal" cx="1630" cy="775" r="5"/>
+
+            <text class="pin-label" x="1495" y="695" text-anchor="middle">A</text>
+            <text class="pin-label" x="1595" y="695" text-anchor="middle">B</text>
+            <text class="pin-label" x="1560" y="766">W</text>
+
+            <text class="component-value" x="1545" y="740"
+                  text-anchor="middle" data-value-for="POT_MASTER">20 kΩ</text>
+
+            <text class="small-note" x="1545" y="801" text-anchor="middle">
+              Voltaj bo‘lgich — ulanish faraz
+            </text>
+          </g>
+
+          <path class="wire assumed-wire"
+                data-wire-id="ASSUMED_POT_TO_CONTROL"
+                data-from-node="POT_MASTER_W"
+                data-to-node="DIGITAL_CONTROL_IN"
+                d="M1630 775 H1665 V680 H1100 V765"/>
+
+          <text class="assumption-label" x="1280" y="672">
+            Taxminiy boshqaruv bog‘lanishi
+          </text>
+
+          <g class="power-rail">
+            <path class="wire power-wire" d="M1280 710 H1600"/>
+            <circle class="supply-terminal" cx="1280" cy="710" r="6"/>
+            <text class="supply-label" x="1295" y="700">+12 V / LED drayver (faraz)</text>
+          </g>
+
+          <g class="power-rail">
+            <path class="wire power-wire" d="M70 1280 H1740"/>
+            <path class="ground-symbol" d="M70 1280 V1294 M55 1294 H85 M61 1301 H79 M67 1308 H73"/>
+            <text class="supply-label" x="95" y="1270">
+              GND / umumiy tayanch — faqat belgilangan nuqtalarda
+            </text>
+          </g>
+
+          <!-- IKKI ALOHIDA LED KANALI -->
+          <g class="component-group" data-component-id="DIGITAL_ID1"
+             data-type="infrared-led" data-status="assumed"
+             tabindex="0" role="button" aria-label="ИД1 infraqizil LED manbai">
+            <path class="wire" d="M1460 825 H1710 V850 H1870"/>
+            <circle class="led-body" cx="1900" cy="850" r="25"/>
+            <path class="led-triangle" d="M1886 838 L1886 862 L1905 850 Z"/>
+            <path class="led-bar" d="M1907 837 V863"/>
+            <path class="light-arrow" d="M1908 831 L1925 814 M1918 839 L1935 822"
+                  marker-end="url(#arrowOptical)"/>
+            <path class="wire" d="M1900 875 V910"/>
+            <path class="ground-symbol" d="M1885 910 H1915 M1891 917 H1909 M1897 924 H1903"/>
+            <text class="component-label" x="1900" y="808" text-anchor="middle">ИД1 / IR LED 1</text>
+            <text class="component-value" x="1900" y="948" text-anchor="middle"
+                  data-value-for="DIGITAL_ID1">yorqinlik: hisoblanadi</text>
+          </g>
+
+          <g class="component-group" data-component-id="DIGITAL_ID2"
+             data-type="infrared-led" data-status="assumed"
+             tabindex="0" role="button" aria-label="ИД2 infraqizil LED manbai">
+            <path class="wire" d="M1460 1100 H1710 V1070 H1870"/>
+            <circle class="led-body" cx="1900" cy="1070" r="25"/>
+            <path class="led-triangle" d="M1886 1058 L1886 1082 L1905 1070 Z"/>
+            <path class="led-bar" d="M1907 1057 V1083"/>
+            <path class="light-arrow" d="M1908 1051 L1925 1034 M1918 1059 L1935 1042"
+                  marker-end="url(#arrowOptical)"/>
+            <path class="wire" d="M1900 1095 V1130"/>
+            <path class="ground-symbol" d="M1885 1130 H1915 M1891 1137 H1909 M1897 1144 H1903"/>
+            <text class="component-label" x="1900" y="1028" text-anchor="middle">ИД2 / IR LED 2</text>
+            <text class="component-value" x="1900" y="1168" text-anchor="middle"
+                  data-value-for="DIGITAL_ID2">yorqinlik: hisoblanadi</text>
+          </g>
+
+          <g class="unresolved-note">
+            <rect x="1750" y="1250" width="460" height="90" rx="8"/>
+            <text x="1770" y="1278">MUHIM: ayrim interfeys ulanishlari taxminiy.</text>
+            <text x="1770" y="1303">Asl mikrosxema pinlari va qiymatlari tekshirilishi kerak.</text>
+            <text x="1770" y="1326">Simulyatsiya — o‘quv modeli, fizik sinov emas.</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="schematic-footer">
+        <div class="connection-summary">
+          <span class="summary-dot summary-good"></span>
+          <span id="verifiedConnectionSummary">Tekshirilgan ulanishlar: tekshiruv kutilmoqda</span>
+          <span class="summary-dot summary-assumed"></span>
+          <span id="assumedConnectionSummary">Taxminiy: manba rasmiga qarab tekshiriladi</span>
+        </div>
+
+        <div class="canvas-hint">
+          Maslahat: g‘ildirak — zoom; bo‘sh joyni tortish — sxemani surish.
+        </div>
+      </div>
+    </section>
+
+    <!-- KOMPONENT INSPEKTORI VA O'LCHOVLAR -->
+    <section class="lower-workspace" aria-label="Komponent ma’lumotlari va o‘lchovlar">
+
+      <article class="panel inspector-panel opto-motion-surface"
+               id="componentInspector" aria-labelledby="inspectorTitle">
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="section-kicker">KOMPONENT INSPEKTORI</p>
+            <h3 id="inspectorTitle">Komponentni tanlang</h3>
+          </div>
+          <span class="value-chip" id="inspectorStatus">Kutilmoqda</span>
+        </div>
+
+        <p class="inspector-placeholder" id="inspectorPlaceholder">
+          Sxemadagi rezistor, kondensator, kuchaytirgich, tranzistor,
+          mantiqiy blok, LED yoki simni tanlang.
+        </p>
+
+        <div class="inspector-details" id="inspectorDetails" hidden>
+          <dl>
+            <div><dt>Ichki ID</dt><dd id="inspectorId">—</dd></div>
+            <div><dt>Element turi</dt><dd id="inspectorType">—</dd></div>
+            <div><dt>Ulanish holati</dt><dd id="inspectorConnectionStatus">—</dd></div>
+            <div><dt>Hisoblash holati</dt><dd id="inspectorModelStatus">—</dd></div>
+          </dl>
+
+          <div id="inspectorEditableFields" class="inspector-editable-fields"></div>
+          <p id="inspectorDescription" class="inspector-description"></p>
+
+          <button class="button button-secondary" type="button" id="resetComponentButton">
+            Standart qiymatni tiklash
+          </button>
+        </div>
+      </article>
+
+      <article class="panel readings-panel opto-motion-surface"
+               id="olchovlar" aria-labelledby="readingsTitle">
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="section-kicker">JONLI HISOBLASHLAR</p>
+            <h3 id="readingsTitle">Asosiy o‘lchov qiymatlari</h3>
+          </div>
+          <span class="simulated-chip">SIMULYATSIYA</span>
+        </div>
+
+        <div class="reading-grid">
+          <div class="reading-card">
+            <span class="reading-icon">I</span>
+            <div><small>LED 1 toki</small><strong id="led1CurrentReading">— mA</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">I</span>
+            <div><small>LED 2 toki</small><strong id="led2CurrentReading">— mA</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">V</span>
+            <div><small>FD chiqish kuchlanishi</small><strong id="fdVoltageReading">— V</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">A</span>
+            <div><small>A1 chiqishi</small><strong id="a1VoltageReading">— V</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">A</span>
+            <div><small>A2 chiqishi</small><strong id="a2VoltageReading">— V</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">Q</span>
+            <div><small>Tanlangan C zaryadi</small><strong id="capacitorChargeReading">— µC</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">P</span>
+            <div><small>Taxminiy chiqish quvvati</small><strong id="outputPowerReading">— mW</strong></div>
+          </div>
+
+          <div class="reading-card">
+            <span class="reading-icon">↔</span>
+            <div><small>Potensiometr boshqaruvi</small><strong id="controlLevelReading">— %</strong></div>
+          </div>
+        </div>
+
+        <p class="micro-note">
+          Faqat model hisoblagan kattaliklar raqam bilan ko‘rsatiladi.
+          Hisoblash imkoni bo‘lmagan qiymat N/A deb belgilanadi.
+        </p>
+      </article>
+    </section>
+
+    <!-- GRAFIKLAR -->
+    <section id="grafiklar" class="graphs-section" aria-labelledby="graphsTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">SIGNALNI KUZATISH</p>
+          <h3 id="graphsTitle">Spektr va elektr signallari</h3>
+          <p>
+            Grafiklar JavaScript simulyatsiya modeli orqali chiziladi.
+          </p>
+        </div>
+        <span class="simulated-chip">Taxminiy ma’lumotlar</span>
+      </div>
+
+      <div class="graph-grid">
+
+        <article class="panel graph-panel opto-motion-surface" aria-labelledby="spectrumTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h4 id="spectrumTitle">O‘tkazish spektri</h4>
+              <p>To‘lqin uzunligi va normallashtirilgan optik javob</p>
+            </div>
+
+            <label class="select-label" for="spectrumRangeSelect">
+              Diapazon
+              <select id="spectrumRangeSelect">
+                <option value="reference">Rasm diapazoni · 600–1250 nm</option>
+                <option value="nir">Tadqiqot NIR · 1800–2400 nm</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="graph-stage" id="spectrumGraphStage">
+            <svg id="spectrumGraph" class="graph-svg"
+                 viewBox="0 0 900 350"
+                 role="img" aria-label="O‘tkazish spektri grafigi">
+              <rect x="56" y="20" width="815" height="276" class="plot-area"/>
+              <text x="463" y="170" text-anchor="middle" class="graph-placeholder-text">
+                Spektr modeli yuklanmoqda
+              </text>
+              <text x="463" y="326" text-anchor="middle">Wavelength (nm)</text>
+              <text x="17" y="165" text-anchor="middle"
+                    transform="rotate(-90 17 165)">Transmission / normalized response</text>
+            </svg>
+          </div>
+
+          <div class="graph-legend">
+            <span><i class="trace trace-orange"></i> O‘lchov kanali</span>
+            <span><i class="trace trace-green"></i> Etalon kanal</span>
+            <span><i class="trace trace-blue"></i> Filtrlangan</span>
+            <span><i class="trace trace-gray"></i> Kompensatsiyalangan</span>
+          </div>
+
+          <div class="graph-readout-row">
+            <div><small>Scan holati</small><strong id="spectrumScanStatus">Tayyor</strong></div>
+            <div><small>Namuna soni</small><strong id="spectrumSampleCount">0</strong></div>
+            <div><small>Kursor λ</small><strong id="spectrumCursorValue">— nm</strong></div>
+          </div>
+        </article>
+
+        <article class="panel graph-panel opto-motion-surface" aria-labelledby="waveformTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h4 id="waveformTitle">Elektr signallari</h4>
+              <p>Vaqt bo‘yicha kuchlanish signallari</p>
+            </div>
+            <span class="simulated-chip">Vaqt sohasi</span>
+          </div>
+
+          <div class="graph-stage" id="waveformGraphStage">
+            <svg id="waveformGraph" class="graph-svg"
+                 viewBox="0 0 900 350"
+                 role="img" aria-label="Kuchlanishning vaqt bo‘yicha grafigi">
+              <rect x="56" y="20" width="815" height="276" class="plot-area"/>
+              <text x="463" y="170" text-anchor="middle" class="graph-placeholder-text">
+                Elektr modeli yuklanmoqda
+              </text>
+              <text x="463" y="326" text-anchor="middle">Time (s)</text>
+              <text x="17" y="165" text-anchor="middle"
+                    transform="rotate(-90 17 165)">Voltage (V)</text>
+            </svg>
+          </div>
+
+          <div class="graph-legend">
+            <span><i class="trace trace-orange"></i> Kirish signali</span>
+            <span><i class="trace trace-green"></i> FD chiqishi</span>
+            <span><i class="trace trace-blue"></i> A chiqishi</span>
+            <span><i class="trace trace-gray"></i> B chiqishi</span>
+          </div>
+
+          <div class="graph-readout-row">
+            <div><small>Acquisition</small><strong id="waveformStatus">Tayyor</strong></div>
+            <div><small>Namuna soni</small><strong id="waveformSampleCount">0</strong></div>
+            <div><small>So‘nggi nuqta</small><strong id="waveformLastValue">— V</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- MODEL IZOH -->
+    <section id="model-izohi" class="panel model-notes opto-motion-surface"
+             aria-labelledby="modelNotesTitle">
+      <div class="panel-heading compact-heading">
+        <div>
+          <p class="section-kicker">ILMIY SHAFFOFLIK</p>
+          <h3 id="modelNotesTitle">Model va cheklovlar</h3>
+        </div>
+        <span class="warning-chip">Fizik qurilma emas</span>
+      </div>
+
+      <div class="model-note-grid">
+        <div>
+          <span class="note-number">01</span>
+          <h4>Taxminiy parametrlar</h4>
+          <p>
+            Rasmda yoki hujjatlarda aniqlanmagan R, C, gain va fotodetektor
+            sezgirligi kabi qiymatlar faraz sifatida belgilanadi.
+          </p>
+        </div>
+
+        <div>
+          <span class="note-number">02</span>
+          <h4>Ulanishlar</h4>
+          <p>
+            Chiziqning rasmda tegib turishi elektr ulanishini o‘zi
+            isbotlamaydi. Tugun modeli SVG chizmasiga mos bo‘lishi kerak.
+          </p>
+        </div>
+
+        <div>
+          <span class="note-number">03</span>
+          <h4>Fotodetektor va optika</h4>
+          <p>
+            LED yorug‘ligi elektr simi emas, optik yo‘l orqali FD ga yetadi.
+            Sezgirlik va yorug‘lik–tok aloqasi taxminiy model bilan hisoblanadi.
+          </p>
+        </div>
+
+        <div>
+          <span class="note-number">04</span>
+          <h4>Natija chegarasi</h4>
+          <p>
+            Kalibrlash ma’lumotlari bo‘lmagani sababli model sertifikatlangan
+            o‘lchov aniqligini da’vo qilmaydi.
+          </p>
+        </div>
+      </div>
+
+      <details class="formula-details">
+        <summary>Model formulalarini ko‘rish</summary>
+
+        <div class="formula-content">
+          <p><code>V = I × R</code> — rezistor uchun.</p>
+          <p><code>Q = C × V</code> — kondensator zaryadi.</p>
+          <p><code>E = 0.5 × C × V²</code> — kondensator energiyasi.</p>
+          <p>
+            <code>I_photo ≈ responsivity × received optical power</code>
+            — fotodetektorning taxminiy modeli.
+          </p>
+          <p>
+            <code>V_out ≈ gain × V_in</code> — soddalashtirilgan
+            kuchaytirgich modeli; chiqish tegishli ta’minot chegaralaridan
+            oshmasligi kerak.
+          </p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div>
+      <div class="footer-brand">OptoLab <span>·</span> O‘quv simulyatsiyasi</div>
+      <p>Ushbu dastur muhandislik tushunchalarini o‘rganish uchun yaratilgan taxminiy modeldir.</p>
+    </div>
+
+    <div class="footer-status">
+      <span class="status-led"></span>
+      <span>Eksperimental validatsiya mavjud emas</span>
+    </div>
+  </footer>
+
+  <!-- Komponent oynasini style.js avtomatik yaratadi. -->
+
+</body>
+</html>
